@@ -1,6 +1,6 @@
 # Snecc
 
-Un Snake multijoueur écrit en Rust en collaboration avec @Giregm.
+Un Snake multijoueur écrit en Rust en collaboration avec [@Giregm](https://github.com/Giregm).
 
 ![Capture d'écran](screenshot.png)
 
