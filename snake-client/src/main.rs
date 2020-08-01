@@ -75,7 +75,7 @@ fn main() {
                         if end_retry {
                             break;
                         }
-                        window.draw_2d(&event, |_c, g| {
+                        window.draw_2d(&event, |_c, g, _d| {
                             clear(BLACK, g);
                             end_retry = true;
                         });
@@ -110,7 +110,7 @@ fn handle_connection(stream: &mut TcpStream, window: &mut PistonWindow) -> bool 
     let assets = find_folder::Search::ParentsThenKids(2, 3).for_folder("assets").unwrap();
     let ref font = assets.join("FiraSans-Regular.ttf");
     let factory = window.factory.clone();
-    let glyphs = &mut Glyphs::new(font, factory, TextureSettings::new()).unwrap();
+    let glyphs = &mut window.load_font(font).unwrap();
     
     // Récupération de l'identifiant du joueur
     let id: u8 = protocol::get_player_id(stream);
@@ -137,9 +137,10 @@ fn handle_connection(stream: &mut TcpStream, window: &mut PistonWindow) -> bool 
     while let Some(event) = window.next() {
         match client_state  {
             ClientState::Waiting => {
-                window.draw_2d(&event, |c, g| {
+                window.draw_2d(&event, |c, g, d| {
                     clear(BLACK, g);
                     draw_hud(&c, g, glyphs, game, &client_state, address, id, &vec![]);
+                    glyphs.factory.encoder.flush(d);
                 });
                 if protocol::check_if_params(stream, game, id) {
                     println!("Received game params. Let's go!");
@@ -176,12 +177,13 @@ fn handle_connection(stream: &mut TcpStream, window: &mut PistonWindow) -> bool 
                     }
                 }
 
-                window.draw_2d(&event, |c, g| {
+                window.draw_2d(&event, |c, g, d| {
                     clear(BLACK, g);
-                    
                     // Affichage du jeu
                     game.draw_game(&c, g, id);
                     draw::draw_hud(&c, g, glyphs, game, &client_state, address, id, &alive_assoc);
+                    glyphs.factory.encoder.flush(d);
+
                });
             }
 
@@ -196,12 +198,14 @@ fn handle_connection(stream: &mut TcpStream, window: &mut PistonWindow) -> bool 
                         return key == Key::R;
                     }
                 }
-                window.draw_2d(&event, |c, g| {
+                window.draw_2d(&event, |c, g, d| {
                     clear(BLACK, g);
                     
                     // Affichage du jeu
                     game.draw_game(&c, g, id);
                     draw::draw_hud(&c, g, glyphs, game, &client_state, address, id, &alive_assoc);
+                    glyphs.factory.encoder.flush(d);
+
                });
             }
         } 
