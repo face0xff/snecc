@@ -168,7 +168,7 @@ fn handle_connection(stream: &mut TcpStream, window: &mut PistonWindow) -> bool 
                         Some(alive) => {
                             alive_assoc = alive.clone();
                             let n_alive: usize = alive.into_iter().filter(|&(_, dead)| !dead).count();
-                            if n_alive <= 1 {
+                            if n_alive <= std::cmp::min(1, (game.n_players - 1) as usize) {
                                 client_state = ClientState::EndOfGame;
                             }
                             last_update = time::Instant::now();

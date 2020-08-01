@@ -183,7 +183,7 @@ fn handle_client(stream: &mut TcpStream, player_id: u8, n_players: u8, game_mute
         {
             let mut game = game_mutex.lock().unwrap();
             alive = game.get_alive();
-            if alive.len() < 2 {
+            if alive.len() < std::cmp::min(2, n_players as usize) {
                 game.update_snake(snake_index);
                 break;
             }
@@ -222,8 +222,8 @@ fn main() {
     let port: u16 = args[1].parse::<u16>().unwrap();
     let n_players: u8 = args[2].parse::<u8>().unwrap();
 
-    if n_players < 2 || n_players > 4 {
-        println!("Number of players should be between 2 and 4.");
+    if n_players < 1 || n_players > 4 {
+        println!("Number of players should be between 1 and 4.");
         exit(0);
     }
 
