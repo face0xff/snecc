@@ -341,16 +341,16 @@ impl Game {
         };
         
         match key {
-            Key::Up => {
+            Key::Up | Key::Z => {
                 snake_by_id.moving = Move::Up;
             }
-            Key::Down => {
+            Key::Down | Key::S => {
                 snake_by_id.moving = Move::Down;
             }
-            Key::Left => {
+            Key::Left | Key::Q => {
                 snake_by_id.moving = Move::Left;
             }
-            Key::Right => {
+            Key::Right | Key::D => {
                 snake_by_id.moving = Move::Right;
             }
             _ => (),
