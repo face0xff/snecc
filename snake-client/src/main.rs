@@ -109,7 +109,6 @@ fn handle_connection(stream: &mut TcpStream, window: &mut PistonWindow) -> bool 
 
     let assets = find_folder::Search::ParentsThenKids(2, 3).for_folder("assets").unwrap();
     let ref font = assets.join("FiraSans-Regular.ttf");
-    let factory = window.factory.clone();
     let glyphs = &mut window.load_font(font).unwrap();
     
     // Récupération de l'identifiant du joueur
