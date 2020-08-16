@@ -1,12 +1,12 @@
 extern crate piston_window;
 
-use piston_window::*;
 use piston_window::types::Color;
+use piston_window::*;
 
-use std::net::TcpStream;
-use std::{thread::sleep, time};
 use std::env;
+use std::net::TcpStream;
 use std::process::exit;
+use std::{thread::sleep, time};
 
 mod draw;
 
@@ -53,11 +53,17 @@ fn main() {
     let port: u16 = args[2].parse::<u16>().unwrap();
 
     let window_size = DEFAULT_GAME_DIMENSIONS;
-    let window: &mut PistonWindow = &mut WindowSettings::new("Snake", [(window_size * DEFAULT_BLOCK_SIZE + HUD_WIDTH) as u32, (window_size * DEFAULT_BLOCK_SIZE) as u32])
-        .exit_on_esc(true)
-        .resizable(false)
-        .build()
-        .unwrap();
+    let window: &mut PistonWindow = &mut WindowSettings::new(
+        "Snake",
+        [
+            (window_size * DEFAULT_BLOCK_SIZE + HUD_WIDTH) as u32,
+            (window_size * DEFAULT_BLOCK_SIZE) as u32,
+        ],
+    )
+    .exit_on_esc(true)
+    .resizable(false)
+    .build()
+    .unwrap();
 
     let mut retry: bool = true;
 
@@ -107,10 +113,11 @@ fn handle_connection(stream: &mut TcpStream, window: &mut PistonWindow) -> bool 
     let game: &mut Game = &mut Game::new(0, 0);
     let address: &str = &stream.peer_addr().unwrap().to_string();
 
-    let assets = find_folder::Search::ParentsThenKids(2, 3).for_folder("assets").unwrap();
+    let assets = find_folder::Search::ParentsThenKids(2, 3)
+        .for_folder("assets")
+        .unwrap();
     let ref font = assets.join("FiraSans-Regular.ttf");
     let glyphs = &mut window.load_font(font).unwrap();
-    
     // Récupération de l'identifiant du joueur
     let id: u8 = protocol::get_player_id(stream);
     println!("Id received: {}", id);
@@ -123,18 +130,16 @@ fn handle_connection(stream: &mut TcpStream, window: &mut PistonWindow) -> bool 
     // En attente d'un ou plusieurs joueurs...
     println!("Waiting for opponent(s)...");
     let mut client_state: ClientState = ClientState::Waiting;
-    
     let mut last_input = time::Instant::now();
     let mut last_update = time::Instant::now();
-    
-    let mut index : usize = 0; // Valeur temporaire
 
+    let mut index: usize = 0; // Valeur temporaire
     let mut alive_assoc: Vec<(u8, bool)> = vec![];
 
-    // Boucle principale, inspirée d'un projet déjà existant 
+    // Boucle principale, inspirée d'un projet déjà existant
     // ainsi que la documentation Piston
     while let Some(event) = window.next() {
-        match client_state  {
+        match client_state {
             ClientState::Waiting => {
                 window.draw_2d(&event, |c, g, d| {
                     clear(BLACK, g);
@@ -152,10 +157,9 @@ fn handle_connection(stream: &mut TcpStream, window: &mut PistonWindow) -> bool 
                 if let Some(Button::Keyboard(key)) = event.press_args() {
                     game.key_pressed(id, key);
                 }
-                
                 // Envoi périodique d'un mouvement
                 if last_input.elapsed() > INPUT_PERIOD {
-                    let snake : &mut Snake = game.players.get_mut(index).unwrap();
+                    let snake: &mut Snake = game.players.get_mut(index).unwrap();
                     protocol::send_move(stream, &snake.moving);
                     game.can_send_move = false;
                     last_input = time::Instant::now();
@@ -167,7 +171,8 @@ fn handle_connection(stream: &mut TcpStream, window: &mut PistonWindow) -> bool 
                         None => (),
                         Some(alive) => {
                             alive_assoc = alive.clone();
-                            let n_alive: usize = alive.into_iter().filter(|&(_, dead)| !dead).count();
+                            let n_alive: usize =
+                                alive.into_iter().filter(|&(_, dead)| !dead).count();
                             if n_alive <= std::cmp::min(1, (game.n_players - 1) as usize) {
                                 client_state = ClientState::EndOfGame;
                             }
@@ -180,10 +185,18 @@ fn handle_connection(stream: &mut TcpStream, window: &mut PistonWindow) -> bool 
                     clear(BLACK, g);
                     // Affichage du jeu
                     game.draw_game(&c, g, id);
-                    draw::draw_hud(&c, g, glyphs, game, &client_state, address, id, &alive_assoc);
+                    draw::draw_hud(
+                        &c,
+                        g,
+                        glyphs,
+                        game,
+                        &client_state,
+                        address,
+                        id,
+                        &alive_assoc,
+                    );
                     glyphs.factory.encoder.flush(d);
-
-               });
+                });
             }
 
             ClientState::EndOfGame => {
@@ -199,15 +212,22 @@ fn handle_connection(stream: &mut TcpStream, window: &mut PistonWindow) -> bool 
                 }
                 window.draw_2d(&event, |c, g, d| {
                     clear(BLACK, g);
-                    
                     // Affichage du jeu
                     game.draw_game(&c, g, id);
-                    draw::draw_hud(&c, g, glyphs, game, &client_state, address, id, &alive_assoc);
+                    draw::draw_hud(
+                        &c,
+                        g,
+                        glyphs,
+                        game,
+                        &client_state,
+                        address,
+                        id,
+                        &alive_assoc,
+                    );
                     glyphs.factory.encoder.flush(d);
-
-               });
+                });
             }
-        } 
+        }
     }
 
     false

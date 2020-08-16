@@ -109,11 +109,23 @@ impl Snake {
     /// * `x`, `y` - Coordonnées initiales du serpent
     /// * `initial_direction` - Direction initiale du serpent
     /// * `initial_moving` - Intention initiale de mouvement du serpent (devrait être égale à `initial_direction`)
-    pub fn new(id: u8, color: (u8, u8, u8), x: i16, y: i16, initial_direction: Move, initial_moving: Move) -> Self {
+    pub fn new(
+        id: u8,
+        color: (u8, u8, u8),
+        x: i16,
+        y: i16,
+        initial_direction: Move,
+        initial_moving: Move,
+    ) -> Self {
         let mut head: SnakeNode = SnakeNode::new(x, y);
         let tail: SnakeNode = SnakeNode::new(x, y);
         head.next_node = Some(Box::new(tail));
-        let color: Color = [(color.0 as f32)/256.0, (color.1 as f32)/256.0, (color.2 as f32)/256.0, 1.0];
+        let color: Color = [
+            (color.0 as f32) / 256.0,
+            (color.1 as f32) / 256.0,
+            (color.2 as f32) / 256.0,
+            1.0,
+        ];
         Snake {
             id,
             color,
@@ -124,7 +136,6 @@ impl Snake {
             stomach: 10,
         }
     }
-    
     /// Renvoie une référence mutable vers la queue du serpent
     fn get_tail(&mut self) -> &mut SnakeNode {
         let mut node: &mut SnakeNode = &mut self.head;
@@ -137,7 +148,6 @@ impl Snake {
             }
         }
     }
-    
     /// Dessine le serpent
     ///
     /// # Arguments
@@ -165,7 +175,7 @@ impl Snake {
     }
 
     /// Réinitialise un serpent à partir d'un noeud.
-    /// Utile pour reconstruire le serpent lors de la réception d'une image. 
+    /// Utile pour reconstruire le serpent lors de la réception d'une image.
     ///
     /// # Arguments
     ///
@@ -216,7 +226,16 @@ impl Food {
     /// * `g` - Référence mutable vers l'objet graphique 2D
     /// * `block_size` - Taille d'un bloc en pixels
     pub fn draw_food(&self, c: &Context, g: &mut G2d, block_size: u16) {
-        draw_rectangle(c, g, self.food_type_to_color(), self.x, self.y, 1, 1, block_size);
+        draw_rectangle(
+            c,
+            g,
+            self.food_type_to_color(),
+            self.x,
+            self.y,
+            1,
+            1,
+            block_size,
+        );
     }
 }
 
@@ -264,12 +283,21 @@ impl Game {
         for snake in &self.players {
             snake.draw(c, g, self.block_size);
             if id == snake.id {
-                draw_rectangle(c, g, [1.0, 1.0, 1.0,1.0], snake.head.x, snake.head.y, 1, 1, self.block_size);
+                draw_rectangle(
+                    c,
+                    g,
+                    [1.0, 1.0, 1.0, 1.0],
+                    snake.head.x,
+                    snake.head.y,
+                    1,
+                    1,
+                    self.block_size,
+                );
             }
         }
         for food in &self.food {
             food.draw_food(c, g, self.block_size);
-        }    
+        }
     }
 
     /// Vide la liste de nourriture
@@ -284,11 +312,7 @@ impl Game {
     /// * `x`, `y` - Coordonnées de la nouvelle nourriture
     /// * `food_type` - Le type de la nouvelle nourriture
     pub fn add_food(&mut self, x: i16, y: i16, food_type: FoodType) {
-        self.food.push(Food {
-            x,
-            y,
-            food_type,
-        });
+        self.food.push(Food { x, y, food_type });
     }
 
     /// Renvoie une option de l'index du joueur dans la liste des joueurs.
@@ -303,7 +327,6 @@ impl Game {
                 return Some(i);
             }
         }
-        
         None
     }
 
@@ -314,13 +337,23 @@ impl Game {
     /// * `player_params` - Vecteur des paramètres des joueurs (identifiant, RGB, coordonnées)
     pub fn init_players(&mut self, player_params: Vec<(u8, u8, u8, u8, i16, i16)>) {
         for (id, red, green, blue, x, y) in player_params {
-            let (initial_direction, initial_moving): (Move, Move) = match (x > (self.dimensions as i16) / 2, y > (self.dimensions as i16) / 2) {
+            let (initial_direction, initial_moving): (Move, Move) = match (
+                x > (self.dimensions as i16) / 2,
+                y > (self.dimensions as i16) / 2,
+            ) {
                 (false, false) => (Move::Down, Move::Down),
                 (false, true) => (Move::Right, Move::Right),
                 (true, false) => (Move::Left, Move::Left),
                 (true, true) => (Move::Up, Move::Up),
             };
-            let snake = Snake::new(id, (red, green, blue), x, y, initial_direction, initial_moving);
+            let snake = Snake::new(
+                id,
+                (red, green, blue),
+                x,
+                y,
+                initial_direction,
+                initial_moving,
+            );
             self.players.push(snake);
         }
     }
@@ -332,14 +365,13 @@ impl Game {
     /// * `id` - Identifiant du joueur
     /// * `key` - Touche appuyée par le joueur
     pub fn key_pressed(&mut self, id: u8, key: Key) {
-        let index = self.get_player_index(id).expect("game.key_pressed, not found id");
+        let index = self
+            .get_player_index(id)
+            .expect("game.key_pressed, not found id");
         let snake_by_id: &mut Snake = match self.players.get_mut(index) {
-            None => {
-                panic!("game.key_pressed, not found id: {}", id)
-            },
+            None => panic!("game.key_pressed, not found id: {}", id),
             Some(snake) => snake,
         };
-        
         match key {
             Key::Up | Key::Z => {
                 snake_by_id.moving = Move::Up;
