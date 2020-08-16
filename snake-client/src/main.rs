@@ -41,10 +41,26 @@ pub enum ClientState {
     OnGoing,
     EndOfGame,
 }
+fn validate_arguments() -> bool {
+    let args: Vec<String> = env::args().collect();
+    if args.len() != 4 {
+        return false;
+    }
+    return match args[3].parse::<bool>() {
+        Err(e) => {
+            println!("Error validate_arguments {}", e);
+            false
+        }
+        Ok(val) => {
+            println!("Ok, validate_arguments, val is: {}", val);
+            true
+        }
+    };
+}
 
 fn main() {
-    if env::args().len() != 3 {
-        println!("Usage: ./snake-client ip port");
+    if !validate_arguments() {
+        println!("Usage: ./snake-client [ip]:ip [port]:port [true | false]:is_player_a_computer");
         exit(0);
     }
 
