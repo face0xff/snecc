@@ -8,8 +8,9 @@ use std::net::TcpStream;
 use std::process::exit;
 use std::{thread::sleep, time};
 
+mod computer_player;
+use computer_player::ComputerPlayer;
 mod draw;
-
 mod game;
 use game::*;
 
@@ -41,8 +42,7 @@ pub enum ClientState {
     OnGoing,
     EndOfGame,
 }
-fn validate_arguments() -> bool {
-    let args: Vec<String> = env::args().collect();
+fn validate_arguments(args: &Vec<String>) -> bool {
     if args.len() != 4 {
         return false;
     }
@@ -59,12 +59,13 @@ fn validate_arguments() -> bool {
 }
 
 fn main() {
-    if !validate_arguments() {
+    let args: Vec<String> = env::args().collect();
+
+    if !validate_arguments(&args) {
         println!("Usage: ./snake-client [ip]:ip [port]:port [true | false]:is_player_a_computer");
         exit(0);
     }
 
-    let args: Vec<String> = env::args().collect();
     let ip_addr: &String = &args[1];
     let port: u16 = args[2].parse::<u16>().unwrap();
 
@@ -90,7 +91,7 @@ fn main() {
         loop {
             if let Ok(mut stream) = TcpStream::connect(format!("{}:{}", ip_addr, port)) {
                 println!("Connected to the server");
-                retry = handle_connection(&mut stream, window);
+                retry = handle_connection(&mut stream, window, &args);
                 if retry {
                     let mut end_retry = false;
                     while let Some(event) = window.next() {
@@ -125,7 +126,11 @@ fn main() {
 ///
 /// * `stream` - Référence mutable vers le flux TCP
 /// * `window` - Référence mutable vers la fenêtre Piston
-fn handle_connection(stream: &mut TcpStream, window: &mut PistonWindow) -> bool {
+fn handle_connection(
+    stream: &mut TcpStream,
+    window: &mut PistonWindow,
+    args: &Vec<String>,
+) -> bool {
     let game: &mut Game = &mut Game::new(0, 0);
     let address: &str = &stream.peer_addr().unwrap().to_string();
 
@@ -137,6 +142,8 @@ fn handle_connection(stream: &mut TcpStream, window: &mut PistonWindow) -> bool 
     // Récupération de l'identifiant du joueur
     let id: u8 = protocol::get_player_id(stream);
     println!("Id received: {}", id);
+    let is_player_a_computer: bool = args[3].parse::<bool>().unwrap();
+    let mut computer: ComputerPlayer = ComputerPlayer::init(id);
 
     match stream.set_read_timeout(Some(time::Duration::from_millis(50))) {
         Err(e) => panic!("{}", e), // erreur ?
@@ -176,7 +183,11 @@ fn handle_connection(stream: &mut TcpStream, window: &mut PistonWindow) -> bool 
                 // Envoi périodique d'un mouvement
                 if last_input.elapsed() > INPUT_PERIOD {
                     let snake: &mut Snake = game.players.get_mut(index).unwrap();
-                    protocol::send_move(stream, &snake.moving);
+                    if is_player_a_computer {
+                        protocol::send_move(stream, &computer.play(&game));
+                    } else {
+                        protocol::send_move(stream, &snake.moving);
+                    }
                     game.can_send_move = false;
                     last_input = time::Instant::now();
                 }
